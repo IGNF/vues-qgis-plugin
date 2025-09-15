@@ -7,9 +7,8 @@
         <layer>troncon_de_route</layer>
         <layer>zone_d_activite_ou_d_interet</layer>
     </vue>
-    <vue id="Investigation">
-        <layer>Ortho 20 cm</layer>
-        <layer>batiment</layer>
+    <vue id="RTE nommées">
+        <layer>route_numerotee_ou_nommee</layer>
         <layer>troncon_de_route</layer>
     </vue>
     <vue id="Sens num">
@@ -18,15 +17,13 @@
     <vue id="Importance">
         <layer>troncon_de_route</layer>
     </vue>
-    <vue id="Orthos">
-        <layer>Ortho 20 cm</layer>
-    </vue>
     <vue id="RTE numéro">
         <layer>route_numerotee_ou_nommee</layer>
         <layer>troncon_de_route</layer>
     </vue>
-    <vue id="RTE nommées">
-        <layer>route_numerotee_ou_nommee</layer>
+    <vue id="Investigation">
+        <layer>Ortho 20 cm</layer>
+        <layer>batiment</layer>
         <layer>troncon_de_route</layer>
     </vue>
     <vue id="DFCI">
@@ -40,4 +37,4 @@
         <layer>route_numerotee_ou_nommee</layer>
         <layer>troncon_de_route</layer>
     </vue>
-</vues>
+    </vues>

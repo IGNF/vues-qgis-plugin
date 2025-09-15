@@ -35,7 +35,8 @@ import xml.etree.ElementTree as ET
 import os
 import shutil
 
-PATH_REP = f"{os.path.dirname(__file__)}\ONGLET"
+PATH_REP = os.path.join(os.path.dirname(__file__),"ONGLET")
+PATH_VUES = os.path.join(PATH_REP,"xml","vues.xml")
 
 # une ou plusieurs valeurs parmi : mCoordsEdit, mScaleWidget, mMagnifierWidget, mRotationLabel, mRotationEdit,
 # mRenderSuppressionCBox, mOntheFlyProjectionStatusButton, mMessageLogViewerButton
@@ -138,7 +139,8 @@ class Vue:
         for layer in list_layer:
             layer_tmp = self.getlayer(layer)
             try:
-                layer_tmp.loadNamedStyle(PATH_REP + f"\symbologie\\{onglet}\\{layer}.qml" )
+                path_qml = os.path.join(PATH_REP,"symbologie",onglet,f"{layer}.qml")
+                layer_tmp.loadNamedStyle(path_qml)
                 layer_tmp.triggerRepaint()
             # pas de style pour le layer specifié (ou repertoire manquant)
             except AttributeError:
@@ -148,7 +150,7 @@ class Vue:
     def getlayer_par_onglet_from_XML(self,onglet):
         # Charger le fichier XML
         list_layer = []
-        tree = ET.parse(PATH_REP + "\\xml\\vues.xml")
+        tree = ET.parse(PATH_VUES)
         root = tree.getroot()
         for vue in root.findall("vue"):
             vue_id = vue.get('id')
@@ -160,14 +162,12 @@ class Vue:
 
     # retourne la liste des onglet inseré
     def get_onglet_from_XML(self):
-        tree = ET.parse(PATH_REP + "\\xml\\vues.xml")
+        tree = ET.parse(PATH_VUES)
         root = tree.getroot()
         list_onglet = []
         for vue in root.findall("vue"):
             list_onglet.append(vue.get('id'))
         return list_onglet
-
-
 
     # masque les layer en fonction de l'onglet
     def masquerlayer(self,listlayer):
@@ -230,16 +230,18 @@ class Vue:
             return
 
         # suppresion de l'onglet dans le xml
-        tree = ET.parse(PATH_REP + "\\xml\\vues.xml")
+        tree = ET.parse(PATH_VUES)
         root = tree.getroot()
         for vue in root.findall('vue'):
             if vue.get('id') == onglet:
                 root.remove(vue)
         # reecriture du xml avec la nouvelle liste des onglets
-        tree.write(PATH_REP + "\\xml\\vues.xml", encoding="utf-8", xml_declaration=True)
+        # tree.write(PATH_REP + "\\xml\\vues.xml", encoding="utf-8", xml_declaration=True)
+        tree.write(PATH_VUES, encoding="utf-8", xml_declaration=True)
 
         # il faut supprimer le repertoire des symbole correspondant
-        rep = f"{PATH_REP}\symbologie\\{onglet}"
+        # rep = f"{PATH_REP}\symbologie\\{onglet}"
+        rep = os.path.join(PATH_REP,"symbologie",onglet)
         try:
             shutil.rmtree(rep)
         except FileNotFoundError:
@@ -257,7 +259,7 @@ class Vue:
 
         # AUTRE APPROCHE
         # on reorganise le xml en deplacant l'ordre des vues
-        tree = ET.parse(PATH_REP + "\\xml\\vues.xml")
+        tree = ET.parse(PATH_VUES)
         root = tree.getroot()
         index = 0
         for vue in root.findall('vue'):
@@ -268,7 +270,7 @@ class Vue:
                 elif sens == "GAUCHE":
                     root.insert(index - 1, vue)
             index +=1
-        tree.write(PATH_REP + "\\xml\\vues.xml", encoding="utf-8", xml_declaration=True)
+        tree.write(PATH_VUES, encoding="utf-8", xml_declaration=True)
         # on supprime le btn de self.listbtn
         for btn in self.listbtn:
             if btn.objectName() == self.onglet_actif:
@@ -304,7 +306,7 @@ class Vue:
 
         if reponse == QMessageBox.Yes:
             list_layer_visible = self.setlist_layer_visible()
-            tree = ET.parse(PATH_REP + "\\xml\\vues.xml")
+            tree = ET.parse(PATH_VUES)
             root = tree.getroot()
             # suppression de tout les layers  correspondant à la vue
             self.suppr_all_layer_visible_xml(root, self.onglet_actif)
@@ -314,7 +316,7 @@ class Vue:
             # sauvegarde des styles de tous les layers ajoutés
             self.sauve_style_layer_visible()
             # Sauvegarder les modifications dans le fichier XML
-            tree.write(PATH_REP + "\\xml\\vues.xml", encoding='utf-8', xml_declaration=True)
+            tree.write(PATH_VUES, encoding='utf-8', xml_declaration=True)
 
 
     # retourne la liste des layer visible dans qgis
@@ -368,8 +370,7 @@ class Vue:
         # recuperation des layer visible de qgis
         list_layer_visible = self.setlist_layer_visible()
         self.onglet_actif = onglet
-
-        tree = ET.parse(PATH_REP + "\\xml\\vues.xml")
+        tree = ET.parse(PATH_VUES)
         root = tree.getroot()
 
         for v in root.findall('vue'):

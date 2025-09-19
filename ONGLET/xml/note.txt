@@ -1,4 +1,0 @@
-id = onglet de la vue
-layer = couche bdtopo à afficher en fonction de l'onglet
-
-ps : attention à la syntaxe (=nom des couches dans qgis)

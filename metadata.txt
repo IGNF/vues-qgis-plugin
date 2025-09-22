@@ -6,7 +6,7 @@
 name=IGN Plugin vues
 qgisMinimumVersion=3.0
 description=Gestion des vues
-version=1.0.0
+version=1.0.1
 author=Gérôme PECHEUR (IGN)
 email=gerome.pecheur@ign.fr
 

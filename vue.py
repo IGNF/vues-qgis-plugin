@@ -540,4 +540,10 @@ class Vue:
             self.add_bouton_defaut()
             self.add_onglet_xml(VUE_DEFAUT)
 
+            self.list_onglet = self.get_onglet_from_XML()
+            self.add_onglet_from_xml()
+            self.InitAspectOnglet()
+
+            self.InitAspectOnglet()
+
         self.addwidgetQGIS(self.list_widgets_qgis, LIST_VUES_QGIS_A_GARDER)

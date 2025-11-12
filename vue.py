@@ -544,6 +544,4 @@ class Vue:
             self.add_onglet_from_xml()
             self.InitAspectOnglet()
 
-            self.InitAspectOnglet()
-
         self.addwidgetQGIS(self.list_widgets_qgis, LIST_VUES_QGIS_A_GARDER)

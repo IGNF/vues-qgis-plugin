@@ -1,8 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<vues>
-    <vue id="courant">
-        <layer>dep65 — dep_65__departement65</layer>
-        <layer>surface_hydrographique</layer>
-        <layer>troncon_hydrographique</layer>
-    </vue>
-</vues>

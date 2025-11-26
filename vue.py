@@ -39,7 +39,7 @@ VUE_DEFAUT = "courant"
 
 # une ou plusieurs valeurs parmi : mCoordsEdit, mScaleWidget, mMagnifierWidget, mRotationLabel, mRotationEdit,
 # mRenderSuppressionCBox, mOntheFlyProjectionStatusButton, mMessageLogViewerButton
-LIST_VUES_QGIS_A_GARDER = ["mOntheFlyProjectionStatusButton","mScaleWidget","mCoordsEdit"]
+LIST_VUES_QGIS_A_GARDER = ["mOntheFlyProjectionStatusButton","mScaleWidget"]
 
 
 # Initialize Qt resources from file resources.py
@@ -567,6 +567,11 @@ class Vue:
         # pas de couches chargées
         if self.first_start:
             self.first_start = False
+
+            projet = QgsProject.instance()
+            if len(projet.mapLayers()) <= 0:
+                QMessageBox.warning(None,"Avertissement","Aucun projet chargé")
+                return
 
             # --- Ajouter le ScrollArea dans la status bar ---
             self.status_bar.addWidget(self.container_defaut)

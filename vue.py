@@ -21,20 +21,23 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QPushButton, QMessageBox, QHBoxLayout, QWidget, QFrame, QScrollArea, QSizePolicy
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QInputDialog
 from qgis._core import QgsMapLayer
 from qgis.core import QgsProject
 
+from .rightclic import ClicDroit
 from copy import copy
 import xml.etree.ElementTree as ET
 import os
 import shutil
 
 PATH_REP = os.path.join(os.path.dirname(__file__),"ONGLET")
-PATH_VUES = os.path.join(PATH_REP,"xml","vues.xml")
+PATH_REP_SYMBOLOGIE = os.path.join(PATH_REP,"symbologie")
+PATH_REP_VUES = os.path.join(PATH_REP,"xml")
+PATH_VUES = os.path.join(PATH_REP_VUES,"vues.xml")
 VUE_DEFAUT = "courant"
 
 # une ou plusieurs valeurs parmi : mCoordsEdit, mScaleWidget, mMagnifierWidget, mRotationLabel, mRotationEdit,
@@ -51,6 +54,8 @@ class Vue:
     """QGIS Plugin Implementation."""
 
     def __init__(self, iface):
+
+        self.filter_clic_droit = ClicDroit(self)
 
         self.iface = iface
         self.layer = self.iface.activeLayer()
@@ -75,7 +80,7 @@ class Vue:
         self.scroll.setFixedHeight(35)  # hauteur visible dans la status bar
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.scroll.setMinimumWidth(800)
+        # self.scroll.setMaximumWidth(800)
         self.scroll.setWidgetResizable(True)
         self.scroll.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.scroll.setStyleSheet("""
@@ -94,7 +99,6 @@ class Vue:
 
         # Widget interne qui contient le layout des boutons vues
         self.container_vues = QWidget()
-        # self.container_vues.setStyleSheet("border: 1px solid red")
         self.container_vues.setObjectName("container_vues")
         # self.container.setAttribute(Qt.WA_StyledBackground, True)
 
@@ -140,8 +144,45 @@ class Vue:
         if not QgsProject.instance().fileName():
             return
 
+
+    def run_at_startup(self):
+        QTimer.singleShot(500, self.run)
+
+    def clic_droit(self,obj):
+        new_name, ok = QInputDialog.getText(None, "Modifier le nom", "Nouveau nom :")
+        if not ok:
+            return
+        if new_name == "":
+            QMessageBox.warning(None,"Erreur","Le nom ne doit pas être vide")
+            return
+
+        # 1: renommer l'onglet dans le xml
+        tree = ET.parse(PATH_VUES)
+        root = tree.getroot()
+        for vue in root.findall("vue"):
+            if vue.get("id") == obj.objectName():
+                vue.set("id", new_name)  # modifier l'attribut 'id'
+        tree.write(PATH_VUES, encoding="utf-8", xml_declaration=True)
+
+        # 2: renommer le dossier correspondant
+        os.rename(os.path.join(PATH_REP_SYMBOLOGIE,obj.objectName()),os.path.join(PATH_REP_SYMBOLOGIE, new_name))
+
+        self.suppr_onglet_perso_from_statusbar()
+        self.list_onglet = self.get_onglet_from_XML()
+        self.add_onglet_from_xml()
+        self.InitAspectOnglet()
+
+        self.update_scroll_width()
+
+        # 3 : remettre l'onglet actif
+        for bouton in self.listbtn:
+            if new_name == bouton.objectName():
+                bouton.setStyleSheet("background-color: #2ab51a ; font-weight: bold")
+        # 4 : initialiser l'onglet actif
+        # self.onglet_actif = obj.objectName()
+
     def initGui(self):
-        pass
+        QgsProject.instance().readProject.connect(self.run_at_startup)
 
     def unload(self):
         self.clear_statusbar_plugin_widgets()
@@ -163,10 +204,10 @@ class Vue:
         except Exception:
             pass
 
-    def changestyle(self,onglet,bouton):
+    def changestyle(self,bouton):
         # sauvegarde de l'onglet actif pour gerer la suppression
-        self.onglet_actif = onglet
-        list_layer = self.getlayer_par_onglet_from_XML(onglet)
+        self.onglet_actif = bouton.objectName()
+        list_layer = self.getlayer_par_onglet_from_XML(bouton.objectName())
 
         self.InitAspectOnglet()
         # bouton en vert
@@ -178,7 +219,7 @@ class Vue:
         for layer in list_layer:
             layer_tmp = self.getlayer(layer)
             try:
-                path_qml = os.path.join(PATH_REP,"symbologie",onglet,f"{layer}.qml")
+                path_qml = os.path.join(PATH_REP,"symbologie",bouton.objectName(),f"{layer}.qml")
                 layer_tmp.loadNamedStyle(path_qml,categories=QgsMapLayer.StyleCategory.Symbology| QgsMapLayer.Labeling)
 
                 layer_tmp.triggerRepaint()
@@ -244,7 +285,7 @@ class Vue:
         # TODO ajout_onglet
         onglet,ok = QInputDialog.getText(None, 'Gestion des vues', 'Veuillez donner un nom à l\'onglet:')
         if ok:
-            self.add_onglet_xml(onglet)
+            self.add_onglet_in_xml(onglet)
             # permet de rafraichir la barre d'etat
             # self.recharge_onglet = False
             self.suppr_onglet_perso_from_statusbar()
@@ -257,6 +298,8 @@ class Vue:
             for bouton in self.listbtn:
                 if bouton.objectName() == onglet:
                     bouton.setStyleSheet("background-color: #2ab51a ; font-weight: bold")
+
+            self.update_scroll_width()
 
     # suppr de l'onglet par suppression de l'onglet du xml puis rechargement par methode run()
     def suppr_onglet(self, onglet):
@@ -289,6 +332,8 @@ class Vue:
         self.addwidgetQGIS(self.list_widgets_qgis, LIST_VUES_QGIS_A_GARDER)
         self.InitAspectOnglet()
         self.onglet_actif = None
+
+        self.update_scroll_width()
 
     def deplace_onglet(self,sens):
         # si des vues ne sont pas definis
@@ -394,7 +439,7 @@ class Vue:
             layer_tmp.saveNamedStyle(path,categories=QgsMapLayer.StyleCategory.Symbology| QgsMapLayer.Labeling)
             layer_tmp.triggerRepaint()
 
-    def add_onglet_xml(self,onglet):
+    def add_onglet_in_xml(self, onglet):
         # recuperation des layer visible de qgis
         list_layer_visible = self.setlist_layer_visible()
         self.onglet_actif = onglet
@@ -420,6 +465,27 @@ class Vue:
 
         # Sauvegarder les modifications dans le fichier XML
         tree.write(PATH_VUES, encoding='utf-8', xml_declaration=True)
+
+    def add_onglet_from_xml(self):
+        for onglet in self.list_onglet:
+            btn = QPushButton(onglet)
+            btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # largeur minimale selon le texte
+            btn.setFixedHeight(20)
+            btn.adjustSize()
+            btn.setObjectName(onglet)
+            btn.setToolTip(btn.objectName())
+            self.listbtn.append(btn)
+
+            self.hlayout_vues.addWidget(btn)
+
+            # gestion clic droit
+            btn.installEventFilter(self.filter_clic_droit)
+
+            # ******************
+            self.update_scroll_width()
+
+            # "_", ignore le parametre de remplacement pour le premier arguement de : clicked
+            btn.clicked.connect(lambda _, bouton=btn: self.changestyle(bouton))
 
     # renvoi le layer specifié en fonction du nom
     def getlayer(self,nom):
@@ -504,21 +570,9 @@ class Vue:
     def add_bouton_defaut(self):
         for compt, btn in enumerate(self.list_bouton_defaut):
             # self.status_bar.insertWidget(compt, btn)
-            btn.setObjectName(str(compt))
+            # btn.setObjectName(str(compt))
             self.hlayout_defaut.addWidget(btn)
 
-    def add_onglet_from_xml(self):
-        for onglet in self.list_onglet:
-            btn = QPushButton(onglet)
-            btn.setFixedHeight(20)
-            btn.setObjectName(onglet)
-            btn.setToolTip(btn.objectName())
-            self.listbtn.append(btn)
-
-            self.hlayout_vues.addWidget(btn)
-
-            # "_", ignore le parametre de remplacement pour le premier arguement de : clicked
-            btn.clicked.connect(lambda _, ong=onglet, bouton=btn: self.changestyle(ong, bouton))
 
     def getwidgetsQGIS(self):
         list_widgets = []
@@ -563,6 +617,30 @@ class Vue:
             except TypeError:
                 pass
 
+    def init_arborescence(self):
+        retour = False
+        if not os.path.exists(PATH_REP):
+            os.mkdir(PATH_REP)
+            os.mkdir(PATH_REP_VUES)
+            os.mkdir(PATH_REP_SYMBOLOGIE)
+            os.mkdir(os.path.join(PATH_REP_SYMBOLOGIE,VUE_DEFAUT))
+            retour = True
+        if not os.path.isfile(PATH_VUES):
+            with open(PATH_VUES, "w", encoding="utf-8") as f:
+                # initialisation de la structure du xml
+                root = ET.Element("vues")
+                tree = ET.ElementTree(root)
+                tree.write(PATH_VUES, encoding="utf-8", xml_declaration=True)
+            retour = True
+        return retour
+
+    def update_scroll_width(self):
+        # Largeur cumulée des boutons + spacing du layout
+        total_width = sum(btn.width() for btn in self.listbtn) + (self.hlayout_vues.spacing() * (
+                    len(self.listbtn) - 1)) + self.hlayout_vues.contentsMargins().left() + self.hlayout_vues.contentsMargins().right()
+        self.container_vues.setFixedWidth(total_width)
+        self.scroll.setMinimumWidth(min(total_width, 800))
+
     def run(self):
         # pas de couches chargées
         if self.first_start:
@@ -581,30 +659,18 @@ class Vue:
                 return
 
             # si le dossier ONGLET existe et s'il contient des vues (vues.xml).
-            if os.path.isfile(PATH_VUES):
-                self.list_onglet = self.get_onglet_from_XML()
-                self.suppr_onglet_perso_from_statusbar()
-                self.suppr_bouton_defaut()
-                self.add_bouton_defaut()
-                self.add_onglet_from_xml()
-                self.InitAspectOnglet()
-            else:
-                # si pas de vues définies, on crée le repertoire "ONGLET" et un fichier "vues.xml" vide
-                os.mkdir(PATH_REP)
-                os.mkdir(os.path.join(PATH_REP,"xml"))
-                os.mkdir(os.path.join(PATH_REP, "symbologie"))
-                os.mkdir(os.path.join(PATH_REP, "symbologie",VUE_DEFAUT))
-                # on creer une premiere vue avec la symbologie active
-                with open(PATH_VUES, "w",encoding="utf-8") as f:
-                    # initialisation de la structure du xml
-                    root = ET.Element("vues")
-                    tree = ET.ElementTree(root)
-                    tree.write(PATH_VUES, encoding="utf-8", xml_declaration=True)
-                self.add_bouton_defaut()
-                self.add_onglet_xml(VUE_DEFAUT)
+            first = self.init_arborescence()
 
-                self.list_onglet = self.get_onglet_from_XML()
-                self.add_onglet_from_xml()
-                self.InitAspectOnglet()
+            self.list_onglet = self.get_onglet_from_XML()
+            self.suppr_onglet_perso_from_statusbar()
+            self.suppr_bouton_defaut()
+            self.add_bouton_defaut()
+            self.add_onglet_from_xml()
+            self.InitAspectOnglet()
+            self.add_bouton_defaut()
+            if first:
+                self.add_onglet_in_xml(VUE_DEFAUT)
 
             self.addwidgetQGIS(self.list_widgets_qgis, LIST_VUES_QGIS_A_GARDER)
+
+            self.changestyle(self.listbtn[0])

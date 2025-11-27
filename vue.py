@@ -22,6 +22,7 @@
  ***************************************************************************/
 """
 from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QFontMetrics
 from PyQt5.QtWidgets import QPushButton, QMessageBox, QHBoxLayout, QWidget, QFrame, QScrollArea, QSizePolicy
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QInputDialog
@@ -33,6 +34,8 @@ from copy import copy
 import xml.etree.ElementTree as ET
 import os
 import shutil
+
+HAUTEUR_BTN = 18
 
 PATH_REP = os.path.join(os.path.dirname(__file__),"ONGLET")
 PATH_REP_SYMBOLOGIE = os.path.join(PATH_REP,"symbologie")
@@ -62,6 +65,7 @@ class Vue:
 
         self.status_bar = self.iface.mainWindow().statusBar()
         self.status_bar.setContentsMargins(0, 0, 0, 0)
+        self.status_bar.setFixedHeight(35)
 
         self.list_bouton_defaut = []
         self.btn_modifie = None
@@ -77,7 +81,7 @@ class Vue:
 
         # --- ScrollArea horizontal ---
         self.scroll = QScrollArea()
-        self.scroll.setFixedHeight(35)  # hauteur visible dans la status bar
+        self.scroll.setFixedHeight(30)  # hauteur visible dans la status bar
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # self.scroll.setMaximumWidth(800)
@@ -99,7 +103,9 @@ class Vue:
 
         # Widget interne qui contient le layout des boutons vues
         self.container_vues = QWidget()
+        self.container_vues.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.container_vues.setObjectName("container_vues")
+        # self.container_vues.setStyleSheet("border: 1px solid red")
         # self.container.setAttribute(Qt.WA_StyledBackground, True)
 
         # Widget interne qui contient le layout des boutons par defaut (+ , - ,....)
@@ -111,20 +117,20 @@ class Vue:
 
         # --- Layout horizontal (qui contient les boutons des vues) ---
         self.hlayout_vues = QHBoxLayout(self.container_vues)
-        self.hlayout_vues.setContentsMargins(2, 2, 2, 2)
-        self.hlayout_vues.setSpacing(4)
+        self.hlayout_vues.setContentsMargins(0, 3, 0, 0)
+        self.hlayout_vues.setSpacing(0)
 
         # --- Layout horizontal (qui contient les boutons par defaut) ---
         self.hlayout_defaut = QHBoxLayout(self.container_defaut)
-        self.hlayout_defaut.setContentsMargins(2, 2, 2, 2)
-        self.hlayout_defaut.setSpacing(4)
+        self.hlayout_defaut.setContentsMargins(0, 0, 0, 0)
+        self.hlayout_defaut.setSpacing(1)
 
         # --- Définir le widget interne du ScrollArea ---
         self.scroll.setWidget(self.container_vues)
 
         self.line = QFrame()
         self.line.setFrameShape(QFrame.VLine)
-        self.line.setLineWidth(5)
+        self.line.setLineWidth(2)
 
         self.onglet_actif = None
         self.listbtn = []
@@ -149,11 +155,15 @@ class Vue:
         QTimer.singleShot(500, self.run)
 
     def clic_droit(self,obj):
-        new_name, ok = QInputDialog.getText(None, "Modifier le nom", "Nouveau nom :")
+        dialinput = QInputDialog()
+        new_name, ok = dialinput.getText(None, "Modifier le nom", "Nouveau nom :",text = f"{obj.objectName()}")
         if not ok:
             return
         if new_name == "":
             QMessageBox.warning(None,"Erreur","Le nom ne doit pas être vide")
+            return
+        if "*" in new_name:
+            QMessageBox.warning(None, "Erreur", "Le nom ne doit pas être contenir '*'")
             return
 
         # 1: renommer l'onglet dans le xml
@@ -469,19 +479,24 @@ class Vue:
     def add_onglet_from_xml(self):
         for onglet in self.list_onglet:
             btn = QPushButton(onglet)
-            btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # largeur minimale selon le texte
-            btn.setFixedHeight(20)
-            btn.adjustSize()
+            btn.setFixedHeight(HAUTEUR_BTN)
+
             btn.setObjectName(onglet)
             btn.setToolTip(btn.objectName())
             self.listbtn.append(btn)
+
+            metrics = QFontMetrics(btn.font())
+            text_width = metrics.horizontalAdvance(btn.objectName())
+
+            btn.setMaximumWidth(text_width+30)
+            btn.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)  # largeur minimale selon le texte
+            btn.adjustSize()
 
             self.hlayout_vues.addWidget(btn)
 
             # gestion clic droit
             btn.installEventFilter(self.filter_clic_droit)
 
-            # ******************
             self.update_scroll_width()
 
             # "_", ignore le parametre de remplacement pour le premier arguement de : clicked
@@ -545,11 +560,11 @@ class Vue:
         self.btn_droit.setObjectName("droite")
         self.btn_gauche.setObjectName("gauche")
         self.btn_modifie.setObjectName("modifie")
-        self.btn_plus.setFixedHeight(20)
-        self.btn_moins.setFixedHeight(20)
-        self.btn_droit.setFixedHeight(20)
-        self.btn_gauche.setFixedHeight(20)
-        self.btn_modifie.setFixedHeight(20)
+        self.btn_plus.setFixedHeight(HAUTEUR_BTN)
+        self.btn_moins.setFixedHeight(HAUTEUR_BTN)
+        self.btn_droit.setFixedHeight(HAUTEUR_BTN)
+        self.btn_gauche.setFixedHeight(HAUTEUR_BTN)
+        self.btn_modifie.setFixedHeight(HAUTEUR_BTN)
 
         self.list_bouton_defaut = [self.btn_plus,self.btn_moins,self.btn_gauche,self.btn_droit,self.btn_modifie]
 
@@ -572,7 +587,6 @@ class Vue:
             # self.status_bar.insertWidget(compt, btn)
             # btn.setObjectName(str(compt))
             self.hlayout_defaut.addWidget(btn)
-
 
     def getwidgetsQGIS(self):
         list_widgets = []

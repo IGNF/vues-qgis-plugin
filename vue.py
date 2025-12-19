@@ -21,13 +21,13 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QVariant, QMetaType
 from PyQt5.QtGui import QFontMetrics
 from PyQt5.QtWidgets import QPushButton, QMessageBox, QHBoxLayout, QWidget, QFrame, QScrollArea, QSizePolicy
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QInputDialog
-from qgis._core import QgsMapLayer
-from qgis.core import QgsProject
+
+from qgis.core import QgsProject,QgsMapLayer
 
 from .rightclic import ClicDroit
 from copy import copy

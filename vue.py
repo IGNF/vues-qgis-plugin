@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import QPushButton, QMessageBox, QHBoxLayout, QWidget, QFra
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QInputDialog
 
-from qgis.core import QgsProject,QgsMapLayer
+from qgis.core import QgsProject,QgsMapLayer,QgsApplication
 
 from .rightclic import ClicDroit
 from copy import copy
@@ -41,6 +41,7 @@ REP_ONGLET = "ONGLET_VUES"
 REP_SYMBOLOGIE = "symbologie"
 REP_VUES = "xml"
 FIC_VUES = "vues.xml"
+FIC_POS = "pos.txt"
 VUE_DEFAUT = "courant"
 
 # une ou plusieurs valeurs parmi : mCoordsEdit, mScaleWidget, mMagnifierWidget, mRotationLabel, mRotationEdit,
@@ -71,7 +72,7 @@ class Vue:
 
         self.first_start = True
 
-        self.pos_dernier_onglet = None
+        # self.pos_dernier_onglet = None
         self.list_onglet = []
 
         # --- ScrollArea horizontal ---
@@ -204,7 +205,12 @@ class Vue:
         except Exception:
             pass
 
-    def changestyle(self,bouton):
+    def on_changestyle(self, bouton):
+        # recuperation de la position de l'ongelt actif dans le layout
+        # pour sauvegarder la position dans le fichier pos.txt
+        self.index = self.hlayout_vues.indexOf(bouton)
+
+
         # sauvegarde de l'onglet actif pour gerer la suppression
         self.onglet_actif = bouton.objectName()
         list_layer = self.getlayer_par_onglet_from_XML(bouton.objectName())
@@ -291,7 +297,7 @@ class Vue:
                 QgsProject.instance().layerTreeRoot().findLayer(layer_tmp.id()).setItemVisibilityChecked(True)
 
     # ajout OU modifie un onglet
-    def ajout_onglet(self):
+    def on_ajout_onglet(self):
         # TODO ajout_onglet
         onglet,ok = QInputDialog.getText(None, 'Gestion des vues', 'Veuillez donner un nom à l\'onglet:')
         if ok:
@@ -310,7 +316,7 @@ class Vue:
             self.update_scroll_width()
 
     # suppr de l'onglet par suppression de l'onglet du xml puis rechargement par methode run()
-    def suppr_onglet(self, onglet):
+    def on_suppr_onglet(self, onglet):
         # TODO suppr_onglet
         if self.onglet_actif is None:
             QMessageBox.warning(None,"Avertissement", "Pas d'onglet actif")
@@ -342,7 +348,7 @@ class Vue:
         self.onglet_actif = None
         self.update_scroll_width()
 
-    def deplace_onglet(self,sens):
+    def on_deplace_onglet(self, sens):
         # si des vues ne sont pas definis
         if not os.path.isfile(os.path.join(self.get_dossier_onglet(),REP_VUES, FIC_VUES)):
                 return
@@ -374,7 +380,7 @@ class Vue:
             if bouton.objectName() == self.onglet_actif:
                 bouton.setStyleSheet("background-color: #2ab51a ; font-weight: bold")
 
-    def modifie_vue(self):
+    def on_modifie_vue(self):
         # TODO modifie_vue
         if self.onglet_actif is None:
             QMessageBox.warning(None, "Attention",
@@ -500,7 +506,7 @@ class Vue:
             self.update_scroll_width()
 
             # "_", ignore le parametre de remplacement pour le premier arguement de : clicked
-            btn.clicked.connect(lambda _, bouton=btn: self.changestyle(bouton))
+            btn.clicked.connect(lambda _, bouton=btn: self.on_changestyle(bouton))
 
     # renvoi le layer specifié en fonction du nom
     def getlayer(self,nom):
@@ -568,16 +574,17 @@ class Vue:
 
         self.list_bouton_defaut = [self.btn_plus,self.btn_moins,self.btn_gauche,self.btn_droit,self.btn_modifie]
 
-        self.btn_plus.clicked.connect(self.ajout_onglet)
+        self.btn_plus.clicked.connect(self.on_ajout_onglet)
         self.btn_plus.setToolTip("Ajouter un onglet")
-        self.btn_moins.clicked.connect(lambda :self.suppr_onglet(self.onglet_actif))
+        self.btn_moins.clicked.connect(lambda :self.on_suppr_onglet(self.onglet_actif))
         self.btn_moins.setToolTip("Supprimer un onglet")
-        self.btn_modifie.clicked.connect(self.modifie_vue)
+        self.btn_modifie.clicked.connect(self.on_modifie_vue)
         self.btn_modifie.setToolTip("Modifier la symbologie de l'onglet actif")
-        self.btn_droit.clicked.connect(lambda _, sens="DROITE": self.deplace_onglet(sens))
+        self.btn_droit.clicked.connect(lambda _, sens="DROITE": self.on_deplace_onglet(sens))
         self.btn_droit.setToolTip("Déplacer l'onglet actif vers la droite")
-        self.btn_gauche.clicked.connect(lambda _, sens="GAUCHE": self.deplace_onglet(sens))
+        self.btn_gauche.clicked.connect(lambda _, sens="GAUCHE": self.on_deplace_onglet(sens))
         self.btn_gauche.setToolTip("Déplacer l'onglet actif vers la gauche")
+
         self.list_nom_btn_defaut = [self.btn_plus.objectName(), self.btn_moins.objectName(), self.btn_droit.objectName(),
                            self.btn_gauche.objectName(), self.btn_modifie.objectName()]
         return self.list_nom_btn_defaut
@@ -635,6 +642,8 @@ class Vue:
             os.mkdir(os.path.join(self.get_dossier_onglet(),REP_VUES))
             os.mkdir(os.path.join(self.get_dossier_onglet(),REP_SYMBOLOGIE))
             os.mkdir(os.path.join(self.get_dossier_onglet(),REP_SYMBOLOGIE, VUE_DEFAUT))
+            with open(os.path.join(self.get_dossier_onglet(),FIC_POS), "w") as f:
+                f.write("0")  # position de l'onglet actif (0 par defaut)
             retour = True
         if not os.path.isfile(os.path.join(self.get_dossier_onglet(),REP_VUES, FIC_VUES)):
             with open(os.path.join(self.get_dossier_onglet(),REP_VUES, FIC_VUES), "w", encoding="utf-8") as f:
@@ -653,6 +662,10 @@ class Vue:
                     len(self.listbtn) - 1)) + self.hlayout_vues.contentsMargins().left() + self.hlayout_vues.contentsMargins().right()
         self.container_vues.setFixedWidth(total_width)
         self.scroll.setMinimumWidth(min(total_width, 800))
+
+    def on_sauve_position(self):
+        with open(os.path.join(self.get_dossier_onglet(), FIC_POS), "w") as f:
+            f.write(str(self.index))
 
     def run(self):
         # pas de couches chargées
@@ -685,6 +698,12 @@ class Vue:
 
             self.addwidgetQGIS(self.list_widgets_qgis, LIST_VUES_QGIS_A_GARDER)
 
+            # slot
+            QgsProject.instance().projectSaved.connect(self.on_sauve_position)
+
             if self.listbtn:
-                self.changestyle(self.listbtn[0])
+                # lecture de la position de l'onglet actif dans le fichier pos.txt
+                with open(os.path.join(self.get_dossier_onglet(), FIC_POS), "r") as f:
+                    pos = f.read()
+                self.on_changestyle(self.listbtn[int(pos)])
 

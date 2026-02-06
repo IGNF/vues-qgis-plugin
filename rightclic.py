@@ -13,5 +13,4 @@ class ClicDroit(QObject):
             if isinstance(obj, QPushButton):
                 self.class_parent.clic_droit(obj)
                 return True
-                # QMessageBox.warning(None, "fd","sdf")
         return False

@@ -376,16 +376,32 @@ class Vue:
             if dlg_importer.exec_() == QDialog.Accepted:
 
                 for vue in dlg_importer.vues_a_importer:
+                    source = os.path.join(rep_vues_absolu[0], vue)
+                    dest = os.path.join(self.rep_vues, vue)
                     try:
                         # copie des dossiers vue sélectionnés dans le repertoire VUES du projet
-                        source = os.path.join(rep_vues_absolu[0],vue)
-                        dest = os.path.join(self.rep_vues,vue)
                         shutil.copytree(source, dest)
+                        # mise à jour du xml et rechargement des vues
+                        self.add_onglet_in_xml(vue)
                     except FileExistsError:
-                        QMessageBox.warning(None, "Attention", f"La vue '{os.path.basename(vue)}' existe déjà")
+                        # QMessageBox.warning(None, "Attention", f"La vue '{os.path.basename(vue)}' existe déjà")
+                        res = QMessageBox.question(
+                            None,
+                            "Mise à jour de la vue",
+                            f"La vue <b><span style='color:red;'>{vue}</span></b> existe déjà.\nVoulez-vous la mettre à jour ?",
+                            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                            QMessageBox.StandardButton.No
+                        )
+                        if res == QMessageBox.StandardButton.Yes:
+                            # suppression avant copie pour mettre à jour la vue
+                            shutil.rmtree(dest)
+                            shutil.copytree(source, dest)
+                            # pas besoin de mettre à jour le xml puisque la vue existe déjà
+                            # on  veut écraser la vue existante sans changer son nom
+                            # self.add_onglet_in_xml(vue)
 
-                    # mise à jour du xml et rechargement des vues
-                    self.add_onglet_in_xml(vue)
+
+
                 self.suppr_onglet_perso_from_statusbar()
                 self.list_vues = self.get_name_all_vues()
                 self.add_btn_all_vues()

@@ -21,7 +21,12 @@ jobs:
 
       - name: Build plugin zip
         run: |
-          zip -r "IGN_Vues.zip" . -x ".git/*" ".github/*"
+          mkdir -p IGN_Vues
+          rsync -av --progress . IGN_Vues/ \
+            --exclude .git \
+            --exclude .github \
+            --exclude IGN_Vues
+          zip -r IGN_Vues.zip IGN_Vues
 
       - name: Create Release
         uses: softprops/action-gh-release@v1

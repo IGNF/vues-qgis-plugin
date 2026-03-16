@@ -289,7 +289,6 @@ class Vue:
 
     # suppr de l'onglet par suppression de l'onglet du xml puis rechargement par methode run()
     def on_suppr_vue(self, vue):
-        # TODO suppr_onglet
         if self.onglet_actif is None:
             QMessageBox.warning(None,"Avertissement", "Pas d'onglet actif")
             return
@@ -360,6 +359,7 @@ class Vue:
 
         if dialog.exec_():
             rep_vues_absolu = dialog.selectedFiles()
+            rep_vues_absolu = [os.path.abspath(p) for p in rep_vues_absolu]
             rep_vues_nom = os.path.basename(rep_vues_absolu[0])
 
             if rep_vues_nom != REP_VUES:
@@ -376,8 +376,8 @@ class Vue:
             if dlg_importer.exec_() == QDialog.Accepted:
 
                 for vue in dlg_importer.vues_a_importer:
-                    source = os.path.join(rep_vues_absolu[0], vue)
-                    dest = os.path.join(self.rep_vues, vue)
+                    source = str(os.path.join(rep_vues_absolu[0], vue))
+                    dest = str(os.path.join(self.rep_vues, vue))
                     try:
                         # copie des dossiers vue sélectionnés dans le repertoire VUES du projet
                         shutil.copytree(source, dest)
@@ -396,8 +396,9 @@ class Vue:
                             # suppression avant copie pour mettre à jour la vue
                             shutil.rmtree(dest)
                             shutil.copytree(source, dest)
-                            # pas besoin de mettre à jour le xml puisque la vue existe déjà
-                            # on  veut écraser la vue existante sans changer son nom
+
+                            # pas besoin de mettre à jour le xml puisque la vue existe déjà,
+                            # on veut écraser la vue existante sans changer son nom
                             # self.add_onglet_in_xml(vue)
 
 

@@ -6,11 +6,11 @@
 name=IGN Plugin vues
 qgisMinimumVersion=3.0
 description=Gestion des vues
-version=1.4.0
+version=1.4.1
 author=Gérôme PECHEUR (IGN)
 email=gerome.pecheur@ign.fr
 
-about=Gestion des vues selon les couches BDTopo
+about=Gestionnaire de vues
 
 tracker=http://bugs
 repository=http://repo

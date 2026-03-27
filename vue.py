@@ -31,6 +31,8 @@ from qgis.PyQt.QtWidgets import QInputDialog
 
 from qgis.core import QgsProject,QgsMapLayer
 
+from pathlib import Path
+
 
 from .dlg_import import *
 from copy import copy
@@ -201,11 +203,16 @@ class Vue:
             Retourne le chemin du dossier des listes.
             :return: str
             """
-        project = QgsProject.instance()
-        chemin_projet = project.fileName()
-        dossier_projet = os.path.dirname(chemin_projet)
-        dossier_vues = os.path.join(dossier_projet, REP_VUES)
-        return dossier_vues
+        # project = QgsProject.instance()
+        # chemin_projet = project.fileName()
+        # dossier_projet = os.path.dirname(chemin_projet)
+        # dossier_vues = os.path.join(dossier_projet, REP_VUES)
+        # return dossier_vues
+
+        projet = QgsProject.instance()
+        chemin_projet = Path(projet.fileName())
+        dossier_vues = Path(chemin_projet.parent , REP_VUES)
+        return str(dossier_vues)
 
     # retourne la liste des layers actifs par vues spécifiques
     def get_layer_actif_in_vue(self, vue_active):
@@ -394,6 +401,7 @@ class Vue:
                         )
                         if res == QMessageBox.StandardButton.Yes:
                             # suppression avant copie pour mettre à jour la vue
+                            print(dest)
                             shutil.rmtree(dest)
                             shutil.copytree(source, dest)
 

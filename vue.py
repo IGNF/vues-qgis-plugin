@@ -170,10 +170,9 @@ class Vue:
             pass
 
     def on_changestyle(self, bouton):
-        # recuperation de la position de l'ongelt actif dans le layout
+        # recuperation de la position de la vue active dans le layout
         # pour sauvegarder la position dans le fichier pos.txt
         self.index = self.hlayout_vues.indexOf(bouton)
-
 
         # sauvegarde de l'onglet actif pour gerer la suppression
         self.onglet_actif = bouton.objectName()
@@ -391,7 +390,6 @@ class Vue:
                         # mise à jour du xml et rechargement des vues
                         self.add_onglet_in_xml(vue)
                     except FileExistsError:
-                        # QMessageBox.warning(None, "Attention", f"La vue '{os.path.basename(vue)}' existe déjà")
                         res = QMessageBox.question(
                             None,
                             "Mise à jour de la vue",
@@ -401,7 +399,6 @@ class Vue:
                         )
                         if res == QMessageBox.StandardButton.Yes:
                             # suppression avant copie pour mettre à jour la vue
-                            print(dest)
                             shutil.rmtree(dest)
                             shutil.copytree(source, dest)
 
@@ -409,13 +406,20 @@ class Vue:
                             # on veut écraser la vue existante sans changer son nom
                             # self.add_onglet_in_xml(vue)
 
-
-
                 self.suppr_onglet_perso_from_statusbar()
                 self.list_vues = self.get_name_all_vues()
                 self.add_btn_all_vues()
                 self.addwidgetQGIS(self.list_widgets_qgis, LIST_VUES_QGIS_A_GARDER)
                 self.InitAspectOnglet()
+                if len(dlg_importer.vues_a_importer)==1:
+                    nom_vue = dlg_importer.vues_a_importer[0]
+                    for btn in self.listbtn:
+                        if btn.objectName() == nom_vue:
+                            self.on_changestyle(btn)
+                            break
+                else:
+                    self.on_changestyle(self.listbtn[0])
+
 
     def on_modifie_vue(self):
         if self.onglet_actif is None:
@@ -718,9 +722,6 @@ class Vue:
             # --- Ajouter le ScrollArea dans la status bar ---
             self.status_bar.addWidget(self.container_defaut)
             self.status_bar.addWidget(self.scroll)
-
-            if len(QgsProject.instance().mapLayers()) <= 0:
-                return
 
             # si le dossier ONGLET existe et s'il contient des vues (vues.xml).
             first = self.init_arborescence()

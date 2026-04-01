@@ -5,13 +5,14 @@
 [general]
 name=IGN Vues
 qgisMinimumVersion=3.0
-description=Gestion des vues
+qgisMaximumVersion=4.99
+description=Gestionnaire de vues
 version=1.4.2
 author=Gérôme PECHEUR (IGN)
 email=gerome.pecheur@ign.fr
 license=GNU AGPL v3
 
-about=Gestionnaire de vues
+about=Ce gestionnaire permet de passer d'une vue à une autre, d'en ajouter, d'en supprimer et de les organiser
 
 tracker=http://bugs
 repository=http://repo
@@ -21,7 +22,7 @@ repository=http://repo
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=  Correction d'un bug lors de l'import d'une vue existante
+changelog=  Version compatible QGIS3 et QGIS4
 
 # Tags are comma separated with spaces allowed
 tags=python

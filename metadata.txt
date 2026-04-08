@@ -3,15 +3,16 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=IGN Plugin vues
+name=IGN Vues
 qgisMinimumVersion=3.0
-description=Gestion des vues
-version=1.4.1
+qgisMaximumVersion=4.99
+description=Gestionnaire de vues
+version=1.4.2
 author=Gérôme PECHEUR (IGN)
 email=gerome.pecheur@ign.fr
 license=GNU AGPL v3
 
-about=Gestionnaire de vues
+about=Ce gestionnaire permet de passer d'une vue à une autre, d'en ajouter, d'en supprimer et de les organiser
 
 tracker=http://bugs
 repository=http://repo
@@ -21,7 +22,7 @@ repository=http://repo
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog=  Version compatible QGIS3 et QGIS4
 
 # Tags are comma separated with spaces allowed
 tags=python

@@ -21,18 +21,15 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import  QTimer
-from PyQt5.QtGui import QFontMetrics
-from PyQt5.QtWidgets import QPushButton, QMessageBox, QHBoxLayout, QWidget, QFrame, QScrollArea, QSizePolicy, \
-    QFileDialog, QMenu
-
-from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QInputDialog
+from qgis.PyQt.QtCore import  QTimer
+from qgis.PyQt.QtGui import QFontMetrics,QIcon
+from qgis.PyQt.QtWidgets import QPushButton, QHBoxLayout, QWidget, QScrollArea, QMenu,QInputDialog,QMessageBox
 
 from qgis.core import QgsProject,QgsMapLayer
 
-
+from .constantes import *
 from .dlg_import import *
+
 from copy import copy
 import xml.etree.ElementTree as ET
 import os
@@ -73,10 +70,10 @@ class Vue:
         # --- ScrollArea horizontal ---
         self.scroll = QScrollArea()
         self.scroll.setFixedHeight(30)  # hauteur visible dans la status bar
-        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.scroll.setVerticalScrollBarPolicy(ScrollBarAlwaysOff)
+        self.scroll.setHorizontalScrollBarPolicy(ScrollBarAsNeeded)
         self.scroll.setWidgetResizable(True)
-        self.scroll.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.scroll.setSizePolicy(Expanding, Fixed)
         self.scroll.setStyleSheet("""
             QScrollArea {
                 border: none;             
@@ -93,15 +90,13 @@ class Vue:
 
         # Widget interne qui contient le layout des boutons vues
         self.container_vues = QWidget()
-        self.container_vues.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.container_vues.setSizePolicy(Fixed,Fixed)
         self.container_vues.setObjectName("container_vues")
 
         # Widget interne qui contient le layout des boutons par defaut (+ ,droite ,....)
         self.container_defaut = QWidget()
-        self.container_defaut.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        # self.container_defaut.setStyleSheet("border: 1px solid blue")
+        self.container_defaut.setSizePolicy(Fixed,Fixed)
         self.container_defaut.setObjectName("container_defaut")
-        # self.container.setAttribute(Qt.WA_StyledBackground, True)
 
         # --- Layout horizontal (qui contient les boutons des vues) ---
         self.hlayout_vues = QHBoxLayout(self.container_vues)
@@ -117,7 +112,7 @@ class Vue:
         self.scroll.setWidget(self.container_vues)
 
         self.line = QFrame()
-        self.line.setFrameShape(QFrame.VLine)
+        self.line.setFrameShape(VLine)
         self.line.setLineWidth(2)
 
         self.onglet_actif = None
@@ -126,12 +121,11 @@ class Vue:
         self.list_widgets_qgis = self.getwidgetsQGIS()
 
         # bouton par defaut
-        self.icon_plus = QIcon(os.path.join(os.path.dirname(__file__) , "icons","plus.png"))
-        # self.icon_moins = QIcon(os.path.join(os.path.dirname(__file__) , "icons","moins.png"))
-        self.icon_fleche_droite = QIcon(os.path.join(os.path.dirname(__file__) , "icons","fleche_droite.png"))
-        self.icon_fleche_gauche = QIcon(os.path.join(os.path.dirname(__file__) , "icons","fleche_gauche.png"))
-        self.icon_modfie = QIcon(os.path.join(os.path.dirname(__file__) , "icons","modifie.png"))
-        self.icon_importer = QIcon(os.path.join(os.path.dirname(__file__), "icons", "importer.png"))
+        self.icon_plus = QIcon(str(Path(os.path.dirname(__file__)) / "icons" / "plus.png"))
+        self.icon_fleche_droite = QIcon(str(Path(os.path.dirname(__file__)) / "icons"/"fleche_droite.png"))
+        self.icon_fleche_gauche = QIcon(str(Path(os.path.dirname(__file__)) / "icons"/"fleche_gauche.png"))
+        self.icon_modfie = QIcon(str(Path(os.path.dirname(__file__)) / "icons"/"modifie.png"))
+        self.icon_importer = QIcon(str(Path(os.path.dirname(__file__))/ "icons"/ "importer.png"))
 
         self.list_nom_btn_defaut = self.init_bouton_defaut()
 
@@ -167,11 +161,10 @@ class Vue:
         except Exception:
             pass
 
-    def on_changestyle(self, bouton):
-        # recuperation de la position de l'ongelt actif dans le layout
+    def on_change_vue(self, bouton):
+        # recuperation de la position de la vue active dans le layout
         # pour sauvegarder la position dans le fichier pos.txt
         self.index = self.hlayout_vues.indexOf(bouton)
-
 
         # sauvegarde de l'onglet actif pour gerer la suppression
         self.onglet_actif = bouton.objectName()
@@ -188,8 +181,8 @@ class Vue:
         for layer in list_layer:
             layer_tmp = self.getlayer(layer)
             try:
-                path_qml = os.path.join(self.rep_vues, bouton.objectName(), f"{layer}.qml")
-                layer_tmp.loadNamedStyle(path_qml,categories=QgsMapLayer.StyleCategory.Symbology| QgsMapLayer.Labeling)
+                path_qml = Path(self.rep_vues, bouton.objectName(), f"{layer}.qml")
+                layer_tmp.loadNamedStyle(str(path_qml),categories=QgsMapLayer.StyleCategory.Symbology| QgsMapLayer.Labeling)
 
                 layer_tmp.triggerRepaint()
             # pas de style pour le layer specifié (ou repertoire manquant)
@@ -201,18 +194,17 @@ class Vue:
             Retourne le chemin du dossier des listes.
             :return: str
             """
-        project = QgsProject.instance()
-        chemin_projet = project.fileName()
-        dossier_projet = os.path.dirname(chemin_projet)
-        dossier_vues = os.path.join(dossier_projet, REP_VUES)
-        return dossier_vues
+        projet = QgsProject.instance()
+        chemin_projet = Path(projet.fileName())
+        dossier_vues = Path(chemin_projet.parent , REP_VUES)
+        return str(dossier_vues)
 
     # retourne la liste des layers actifs par vues spécifiques
     def get_layer_actif_in_vue(self, vue_active):
         list_layer = []
-        rep = os.path.join(self.rep_vues, vue_active)
+        rep = Path(self.rep_vues, vue_active)
         for file in os.listdir(rep):
-            chemin = os.path.join(rep, file)
+            chemin = Path(rep, file)
             if os.path.isfile(chemin):
                 if os.path.splitext(file)[1] == ".qml":
                     list_layer.append(os.path.splitext(file)[0])
@@ -223,7 +215,7 @@ class Vue:
     # retourne la liste de toutes les vues
     def get_name_all_vues(self):
         # lecture à partir du xml pour récupérer l'ordre d'affichage des vues
-        tree = ET.parse(os.path.join(self.rep_vues, XML_VUES))
+        tree = ET.parse(Path(self.rep_vues, XML_VUES))
         root = tree.getroot()
         list_onglet = []
         for vue in root.findall("vue"):
@@ -298,15 +290,15 @@ class Vue:
         # if reponse == QMessageBox.No:
         #     return
         # suppression de l'onglet dans le xml --> juste pour gérer l'ordre d'affichage des vues
-        tree = ET.parse(os.path.join(self.rep_vues, XML_VUES))
+        tree = ET.parse(Path(self.rep_vues, XML_VUES))
         root = tree.getroot()
         for vue_xml in root.findall('vue'):
             if vue_xml.get('id') == vue:
                 root.remove(vue_xml)
-        tree.write(os.path.join(self.rep_vues, XML_VUES), encoding="utf-8", xml_declaration=True)
+        tree.write(Path(self.rep_vues, XML_VUES), encoding="utf-8", xml_declaration=True)
 
         # il faut supprimer le repertoire de la vue correspondante
-        rep = os.path.join(self.rep_vues, vue)
+        rep = Path(self.rep_vues, vue)
         try:
             shutil.rmtree(rep)
         except FileNotFoundError:
@@ -353,11 +345,11 @@ class Vue:
     def on_importer_vue(self):
         dialog = QFileDialog()
         dialog.setWindowTitle("Choisir une vue")  # titre
-        dialog.setFileMode(QFileDialog.Directory)  # uniquement dossiers
-        dialog.setOptions(QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
-        dialog.setLabelText(QFileDialog.Accept, "Sélectionner un dossier 'VUES'")  # texte du bouton
+        dialog.setFileMode(Directory)  # uniquement dossiers
+        dialog.setOptions(ShowDirsOnly | DontResolveSymlinks)
+        dialog.setLabelText(Accept, "Sélectionner un dossier 'VUES'")  # texte du bouton
 
-        if dialog.exec_():
+        if dialog.exec():
             rep_vues_absolu = dialog.selectedFiles()
             rep_vues_absolu = [os.path.abspath(p) for p in rep_vues_absolu]
             rep_vues_nom = os.path.basename(rep_vues_absolu[0])
@@ -368,23 +360,22 @@ class Vue:
 
             rep_enfants_absolu = []
             for rep_vue in os.listdir(rep_vues_absolu[0]):
-                if os.path.isdir(os.path.join(rep_vues_absolu[0], rep_vue)):
-                    rep_enfants_absolu.append(os.path.join(rep_vues_absolu[0],rep_vue))
+                if os.path.isdir(Path(rep_vues_absolu[0], rep_vue)):
+                    rep_enfants_absolu.append(Path(rep_vues_absolu[0],rep_vue))
 
             dlg_importer = DialogImport()
             dlg_importer.ini_list_view(rep_enfants_absolu)
-            if dlg_importer.exec_() == QDialog.Accepted:
+            if dlg_importer.exec() == Accepted:
 
                 for vue in dlg_importer.vues_a_importer:
-                    source = str(os.path.join(rep_vues_absolu[0], vue))
-                    dest = str(os.path.join(self.rep_vues, vue))
+                    source = str(Path(rep_vues_absolu[0], vue))
+                    dest = str(Path(self.rep_vues, vue))
                     try:
                         # copie des dossiers vue sélectionnés dans le repertoire VUES du projet
                         shutil.copytree(source, dest)
                         # mise à jour du xml et rechargement des vues
                         self.add_onglet_in_xml(vue)
                     except FileExistsError:
-                        # QMessageBox.warning(None, "Attention", f"La vue '{os.path.basename(vue)}' existe déjà")
                         res = QMessageBox.question(
                             None,
                             "Mise à jour de la vue",
@@ -401,13 +392,20 @@ class Vue:
                             # on veut écraser la vue existante sans changer son nom
                             # self.add_onglet_in_xml(vue)
 
-
-
                 self.suppr_onglet_perso_from_statusbar()
                 self.list_vues = self.get_name_all_vues()
                 self.add_btn_all_vues()
                 self.addwidgetQGIS(self.list_widgets_qgis, LIST_VUES_QGIS_A_GARDER)
                 self.InitAspectOnglet()
+                if len(dlg_importer.vues_a_importer)==1:
+                    nom_vue = dlg_importer.vues_a_importer[0]
+                    for btn in self.listbtn:
+                        if btn.objectName() == nom_vue:
+                            self.on_change_vue(btn)
+                            break
+                else:
+                    self.on_change_vue(self.listbtn[0])
+
 
     def on_modifie_vue(self):
         if self.onglet_actif is None:
@@ -429,7 +427,7 @@ class Vue:
         menu = QMenu()
         renommer = menu.addAction("Renommer")
         supprimer = menu.addAction("Supprimer")
-        action = menu.exec_(bouton.mapToGlobal(pos))
+        action = menu.exec(bouton.mapToGlobal(pos))
 
         if action == renommer:
             self.renomme(bouton)
@@ -452,7 +450,7 @@ class Vue:
     # en fonction de l'onglet actif
     def sauve_style_layer_visible(self):
         # TODO sauve_style_layer_visible
-        rep = os.path.join(self.rep_vues, self.onglet_actif)
+        rep = Path(self.rep_vues, self.onglet_actif)
         list_layer_visible = self.setlist_layer_visible()
         # Je supprime le repertoire avant de le recréer,
         # ça permet de supprimer les styles directement.
@@ -463,14 +461,14 @@ class Vue:
             pass
         os.mkdir(rep)
         for layer in list_layer_visible:
-            path = os.path.join(self.rep_vues, self.onglet_actif, f"{layer}.qml")
+            path = Path(self.rep_vues, self.onglet_actif, f"{layer}.qml")
             layer_tmp = self.getlayer(layer)
-            layer_tmp.saveNamedStyle(path,categories=QgsMapLayer.StyleCategory.Symbology| QgsMapLayer.Labeling)
+            layer_tmp.saveNamedStyle(str(path),categories=QgsMapLayer.StyleCategory.Symbology| QgsMapLayer.Labeling)
             layer_tmp.triggerRepaint()
 
     def add_onglet_in_xml(self, onglet):
         # recuperation des layer visible de qgis
-        xml_path = os.path.join(self.rep_vues, XML_VUES)
+        xml_path = Path(self.rep_vues, XML_VUES)
         self.onglet_actif = onglet
         tree = ET.parse(xml_path)
         root = tree.getroot()
@@ -501,16 +499,16 @@ class Vue:
             return
 
         # 1: renommer l'onglet dans le xml
-        tree = ET.parse(os.path.join(self.rep_vues, XML_VUES))
+        tree = ET.parse(Path(self.rep_vues, XML_VUES))
         root = tree.getroot()
         for vue in root.findall("vue"):
             if vue.get("id") == obj.objectName():
                 vue.set("id", new_name)  # modifier l'attribut 'id'
-        tree.write(os.path.join(self.rep_vues, XML_VUES),
+        tree.write(Path(self.rep_vues, XML_VUES),
                    encoding="utf-8", xml_declaration=True)
-        # 2: renommer le dossier correspondant
-        os.rename(os.path.join(self.rep_vues, obj.objectName()),
-                  os.path.join(self.rep_vues, new_name))
+        # 2: renommer lePathdossier correspondant
+        os.rename(Path(self.rep_vues, obj.objectName()),
+                  Path(self.rep_vues, new_name))
 
         self.suppr_onglet_perso_from_statusbar()
         self.list_vues = self.get_name_all_vues()
@@ -530,7 +528,7 @@ class Vue:
             btn = QPushButton(onglet)
             btn.setFixedHeight(HAUTEUR_BTN)
 
-            btn.setContextMenuPolicy(Qt.CustomContextMenu)
+            btn.setContextMenuPolicy(CustomContextMenu)
             btn.customContextMenuRequested.connect(lambda pos, b=btn: self.on_show_menu_vue(pos, b))
             # gestion clic droit → remplacé par le menu contextuel
             # btn.installEventFilter(self.filter_clic_droit)
@@ -542,14 +540,14 @@ class Vue:
             metrics = QFontMetrics(btn.font())
             text_width = metrics.horizontalAdvance(btn.objectName())
             btn.setMaximumWidth(text_width+30)
-            btn.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)  # largeur minimale selon le texte
+            btn.setSizePolicy(MinimumExpanding, Fixed)  # largeur minimale selon le texte
             btn.adjustSize()
 
             self.hlayout_vues.addWidget(btn)
             self.update_scroll_width()
 
             # "_", ignore le parametre de remplacement pour le premier arguement de : clicked
-            btn.clicked.connect(lambda _, bouton=btn: self.on_changestyle(bouton))
+            btn.clicked.connect(lambda _, bouton=btn: self.on_change_vue(bouton))
 
     # renvoi le layer specifié en fonction du nom
     def getlayer(self,nom):
@@ -669,16 +667,16 @@ class Vue:
         retour = False
         if not os.path.exists(self.rep_vues):
             os.mkdir(self.rep_vues)
-            os.mkdir(os.path.join(self.rep_vues, VUE_DEFAUT))
-            with open(os.path.join(self.rep_vues, FIC_POS), "w") as f:
+            os.mkdir(Path(self.rep_vues, VUE_DEFAUT))
+            with open(Path(self.rep_vues, FIC_POS), "w") as f:
                 f.write("0")  # position de l'onglet actif (0 par defaut)
             retour = True
-        if not os.path.isfile(os.path.join(self.rep_vues, XML_VUES)):
-            with open(os.path.join(self.rep_vues, XML_VUES), "w", encoding="utf-8") as f:
+        if not os.path.isfile(Path(self.rep_vues, XML_VUES)):
+            with open(Path(self.rep_vues, XML_VUES), "w", encoding="utf-8") as f:
                 # initialisation de la structure du xml
                 root = ET.Element("vues")
                 tree = ET.ElementTree(root)
-                tree.write(os.path.join(self.rep_vues, XML_VUES),
+                tree.write(Path(self.rep_vues, XML_VUES),
                            encoding="utf-8", xml_declaration=True)
                 retour = True
         return retour
@@ -690,8 +688,8 @@ class Vue:
         self.container_vues.setFixedWidth(total_width)
         self.scroll.setMinimumWidth(min(total_width, 800))
 
-    def on_sauve_position(self):
-        with open(os.path.join(self.rep_vues, FIC_POS), "w") as f:
+    def on_sauve_vue_active(self):
+        with open(Path(self.rep_vues, FIC_POS), "w") as f:
             f.write(str(self.index))
 
     def run(self):
@@ -705,14 +703,11 @@ class Vue:
                 return
 
             self.rep_vues = self.get_dossier_vues()
-            self.path_xml = os.path.join(self.rep_vues, XML_VUES)
+            self.path_xml = Path(self.rep_vues, XML_VUES)
 
             # --- Ajouter le ScrollArea dans la status bar ---
             self.status_bar.addWidget(self.container_defaut)
             self.status_bar.addWidget(self.scroll)
-
-            if len(QgsProject.instance().mapLayers()) <= 0:
-                return
 
             # si le dossier ONGLET existe et s'il contient des vues (vues.xml).
             first = self.init_arborescence()
@@ -730,17 +725,17 @@ class Vue:
             self.addwidgetQGIS(self.list_widgets_qgis, LIST_VUES_QGIS_A_GARDER)
 
             # slot
-            QgsProject.instance().projectSaved.connect(self.on_sauve_position)
+            QgsProject.instance().projectSaved.connect(self.on_sauve_vue_active)
 
             if self.listbtn:
                 pos = 0
-                path_fic_pos = os.path.join(self.rep_vues, FIC_POS)
+                path_fic_pos = Path(self.rep_vues, FIC_POS)
                 # lecture de la position de l'onglet actif dans le fichier pos.txt
                 if os.path.isfile(path_fic_pos):
-                    with open(os.path.join(self.rep_vues, FIC_POS), "r") as f:
+                    with open(Path(self.rep_vues, FIC_POS), "r") as f:
                         pos = f.read()
                 else:
                     with open(path_fic_pos, "w") as f:
                         f.write("0")  # position de l'onglet actif (0 par defaut)
-                self.on_changestyle(self.listbtn[int(pos)])
+                self.on_change_vue(self.listbtn[int(pos)])
 

@@ -36,8 +36,7 @@ from .mapping_version import *
 from copy import copy
 
 import xml.etree.ElementTree as ET # nosec B405
-# prise en compte du package en local
-from .defusedxml.ElementTree import parse
+
 
 import os
 import shutil
@@ -211,7 +210,7 @@ class Vue:
     # retourne la liste de toutes les vues
     def get_name_all_vues(self):
         # lecture à partir du xml pour récupérer l'ordre d'affichage des vues
-        tree = parse(Path(self.rep_vues, XML_VUES))
+        tree = ET.parse(Path(self.rep_vues, XML_VUES)) # nosec B314
         root = tree.getroot()
         list_onglet = []
         for vue in root.findall("vue"):
@@ -282,7 +281,7 @@ class Vue:
             return
 
         # suppression de l'onglet dans le xml → juste pour gérer l'ordre d'affichage des vues
-        tree = parse(Path(self.rep_vues, XML_VUES))
+        tree = ET.parse(Path(self.rep_vues, XML_VUES)) # nosec B314
         root = tree.getroot()
         for vue_xml in root.findall('vue'):
             if vue_xml.get('id') == vue:
@@ -309,7 +308,7 @@ class Vue:
                 return
         # AUTRE APPROCHE
         # on reorganise le xml en déplaçant l'ordre des vues
-        tree = parse(self.path_xml)
+        tree = ET.parse(self.path_xml) # nosec B314
         root = tree.getroot()
         index = 0
         for vue in root.findall('vue'):
@@ -479,7 +478,7 @@ class Vue:
         # recuperation des layer visible de qgis
         xml_path = Path(self.rep_vues, XML_VUES)
         self.onglet_actif = onglet
-        tree = parse(xml_path)
+        tree = ET.parse(xml_path) # nosec B314
         root = tree.getroot()
 
         for v in root.findall('vue'):
@@ -507,7 +506,7 @@ class Vue:
             return
 
         # 1: renommer l'onglet dans le xml
-        tree = parse(Path(self.rep_vues, XML_VUES))
+        tree = ET.parse(Path(self.rep_vues, XML_VUES)) # nosec B314
         root = tree.getroot()
         for vue in root.findall("vue"):
             if vue.get("id") == obj.objectName():

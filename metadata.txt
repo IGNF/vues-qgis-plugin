@@ -7,7 +7,7 @@ name=MultiViewManager
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 description=This manager allows you to switch between views, add new ones, delete them, and organize them.
-version=1.4.9
+version=1.4.10
 author=Gérôme PECHEUR (IGN)
 email=gerome.pecheur@ign.fr
 license=GNU AGPL v3
@@ -23,7 +23,9 @@ homepage=https://ignf.github.io/multi-view-manager-qgis-plugin/
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=  1.4.9 : Prise en compte xml.etree.ElementTree en mode safe
+changelog=
+ 1.4.10 : Correction d'un bug de compatibilité QGIS4
+ 1.4.9  : Prise en compte xml.etree.ElementTree en mode safe
 
 # Tags are comma separated with spaces allowed
 tags=python

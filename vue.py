@@ -177,7 +177,7 @@ class Vue:
             layer_tmp = self.getlayer(layer)
             try:
                 path_qml = Path(self.rep_vues, bouton.objectName(), f"{layer}.qml")
-                layer_tmp.loadNamedStyle(str(path_qml),categories=QgsMapLayer.StyleCategory.Symbology| QgsMapLayer.Labeling)
+                layer_tmp.loadNamedStyle(str(path_qml),categories=QgsMapLayer.StyleCategory.Symbology| QgsMapLayer.StyleCategory.Labeling)
 
                 layer_tmp.triggerRepaint()
             # pas de style pour le layer spécifié (ou répertoire manquant)
@@ -471,7 +471,7 @@ class Vue:
         for layer in list_layer_visible:
             path = Path(self.rep_vues, self.onglet_actif, f"{layer}.qml")
             layer_tmp = self.getlayer(layer)
-            layer_tmp.saveNamedStyle(str(path),categories=QgsMapLayer.StyleCategory.Symbology| QgsMapLayer.Labeling)
+            layer_tmp.saveNamedStyle(str(path),categories=QgsMapLayer.StyleCategory.Symbology| QgsMapLayer.StyleCategory.Labeling)
             layer_tmp.triggerRepaint()
 
     def add_onglet_in_xml(self, onglet):

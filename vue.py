@@ -25,21 +25,21 @@ import webbrowser
 
 from qgis.PyQt.QtCore import  QTimer
 from qgis.PyQt.QtGui import QFontMetrics,QIcon
-from qgis.PyQt.QtWidgets import QPushButton, QHBoxLayout, QWidget, QScrollArea, QMenu,QInputDialog
-
+from qgis.PyQt.QtWidgets import (QPushButton, QHBoxLayout, QWidget, QScrollArea, QMenu,QInputDialog,QFrame
+,QMessageBox, QFileDialog,QSizePolicy)
 from qgis.core import QgsProject,QgsMapLayer
 
 from .constantes import *
 from .dlg_import import *
-from .mapping_version import *
-
 from copy import copy
 
 import xml.etree.ElementTree as ET # nosec B405
-
-
 import os
 import shutil
+
+
+class VLine:
+    pass
 
 
 class Vue:
@@ -78,20 +78,20 @@ class Vue:
         # --- ScrollArea horizontal ---
         self.scroll = QScrollArea()
         self.scroll.setFixedHeight(30)  # hauteur visible dans la status bar
-        self.scroll.setVerticalScrollBarPolicy(ScrollBarAlwaysOff)
-        self.scroll.setHorizontalScrollBarPolicy(ScrollBarAsNeeded)
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.scroll.setWidgetResizable(True)
-        self.scroll.setSizePolicy(Expanding, Fixed)
+        self.scroll.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.scroll.setStyleSheet(STYLE_SCROLLER)
 
         # Widget interne qui contient le layout des boutons vues
         self.container_vues = QWidget()
-        self.container_vues.setSizePolicy(Fixed,Fixed)
+        self.container_vues.setSizePolicy(QSizePolicy.Policy.Fixed,QSizePolicy.Policy.Fixed)
         self.container_vues.setObjectName("container_vues")
 
         # Widget interne qui contient le layout des boutons par defaut (+ ,droite ,....)
         self.container_defaut = QWidget()
-        self.container_defaut.setSizePolicy(Fixed,Fixed)
+        self.container_defaut.setSizePolicy(QSizePolicy.Policy.Fixed,QSizePolicy.Policy.Fixed)
         self.container_defaut.setObjectName("container_defaut")
 
         # --- Layout horizontal (qui contient les boutons des vues) ---
@@ -108,7 +108,7 @@ class Vue:
         self.scroll.setWidget(self.container_vues)
 
         self.line = QFrame()
-        self.line.setFrameShape(VLine)
+        self.line.setFrameShape(QFrame.Shape.VLine)
         self.line.setLineWidth(2)
 
         self.onglet_actif = None
@@ -336,9 +336,9 @@ class Vue:
     def on_importer_vue(self):
         dialog = QFileDialog()
         dialog.setWindowTitle("Choisir une vue")  # titre
-        dialog.setFileMode(Directory)  # uniquement dossiers
-        dialog.setOptions(ShowDirsOnly | DontResolveSymlinks)
-        dialog.setLabelText(Accept, "Sélectionner un dossier 'VUES'")  # texte du bouton
+        dialog.setFileMode(QFileDialog.FileMode.Directory)  # uniquement dossiers
+        dialog.setOptions(QFileDialog.Option.ShowDirsOnly | QFileDialog.Option.DontResolveSymlinks)
+        dialog.setLabelText(QFileDialog.DialogLabel.Accept, "Sélectionner un dossier 'VUES'")  # texte du bouton
 
         if dialog.exec():
             rep_vues_absolu = dialog.selectedFiles()
@@ -356,7 +356,7 @@ class Vue:
 
             dlg_importer = DialogImport()
             dlg_importer.ini_list_view(rep_enfants_absolu)
-            if dlg_importer.exec() == Accepted:
+            if dlg_importer.exec() == QFileDialog.DialogCode.Accepted:
 
                 for vue in dlg_importer.vues_a_importer:
                     source = str(Path(rep_vues_absolu[0], vue))
@@ -409,7 +409,7 @@ class Vue:
     def on_aide(self):
         dlgAProposDe = QDialog()
         loadUi(os.path.dirname(__file__) + "/aproposde.ui", dlgAProposDe)
-        dlgAProposDe.setWindowFlags(WindowStaysOnTopHint | WindowCloseButtonHint)
+        dlgAProposDe.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
         dlgAProposDe.pushButtonAffichedoc.clicked.connect(self.afficheDoc)
         dlgAProposDe.exec()
 
@@ -424,11 +424,11 @@ class Vue:
 
         reponse = QMessageBox.warning(None, "Attention",
                                       f"Voulez vous vraiment appliquer la nouvelle vue à l'onglet <br><b>{self.onglet_actif}<\b><\br> ?",
-                                      Yes | No)
-        if reponse == No:
+                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reponse == QMessageBox.StandardButton.No:
             return
 
-        if reponse == Yes:
+        if reponse == QMessageBox.StandardButton.Yes:
             # sauvegarde des styles de tous les layers ajoutés
             self.sauve_style_layer_visible()
 
@@ -534,7 +534,7 @@ class Vue:
             btn = QPushButton(onglet)
             btn.setFixedHeight(HAUTEUR_BTN)
 
-            btn.setContextMenuPolicy(CustomContextMenu)
+            btn.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             btn.customContextMenuRequested.connect(lambda pos, b=btn: self.on_show_menu_vue(pos, b))
 
             btn.setObjectName(onglet)
@@ -544,7 +544,7 @@ class Vue:
             metrics = QFontMetrics(btn.font())
             text_width = metrics.horizontalAdvance(btn.objectName())
             btn.setMaximumWidth(text_width+30)
-            btn.setSizePolicy(MinimumExpanding, Fixed)  # largeur minimale selon le texte
+            btn.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)  # largeur minimale selon le texte
             btn.adjustSize()
 
             self.hlayout_vues.addWidget(btn)

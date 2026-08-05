@@ -1,9 +1,10 @@
 import os
 from pathlib import Path
+
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QFont
-from qgis.PyQt.QtWidgets import  QListWidgetItem
+from qgis.PyQt.QtWidgets import  QListWidgetItem,QDialog
 from qgis.PyQt.uic import loadUi
-from .mapping_version import *
 
 class DialogImport(QDialog):
     def __init__(self,parent=None):
@@ -25,14 +26,14 @@ class DialogImport(QDialog):
             font.setPointSize(10)
             font.setBold(True)
             item.setFont(font)
-            item.setCheckState(Unchecked)
+            item.setCheckState(Qt.CheckState.Unchecked)
             self.listWidget_vues.addItem(item)
 
     def get_vues_a_importer(self):
         self.vues_a_importer = []
         for i in range(self.listWidget_vues.count()):
             item = self.listWidget_vues.item(i)
-            if item.checkState() == Checked:
+            if item.checkState() == Qt.CheckState.Checked:
                 self.vues_a_importer.append(item.text())
         return self.vues_a_importer
 
@@ -40,9 +41,9 @@ class DialogImport(QDialog):
         for i in range(self.listWidget_vues.count()):
             item = self.listWidget_vues.item(i)
             if self.tout_coche:
-                item.setCheckState(Unchecked)
+                item.setCheckState(Qt.CheckState.Unchecked)
             else:
-                item.setCheckState(Checked)
+                item.setCheckState(Qt.CheckState.Checked)
         self.tout_coche = not self.tout_coche
 
     def importer(self):

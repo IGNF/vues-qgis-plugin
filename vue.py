@@ -411,7 +411,7 @@ class Vue:
         loadUi(os.path.dirname(__file__) + "/aproposde.ui", dlgAProposDe)
         dlgAProposDe.setWindowFlags(WindowStaysOnTopHint | WindowCloseButtonHint)
         dlgAProposDe.pushButtonAffichedoc.clicked.connect(self.afficheDoc)
-        dlgAProposDe.exec_()
+        dlgAProposDe.exec()
 
     def afficheDoc(self):
         webbrowser.open("https://ignf.github.io/multi-view-manager-qgis-plugin/")
